@@ -1,0 +1,73 @@
+version: '3.4'
+services:
+
+  traefik:
+    container_name: traefik
+    image: traefik:v2.5
+    ports:
+      - 80:80
+      - 8080:8080
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./traefik/traefik.yml:/etc/traefik/traefik.yml
+
+  auth:
+    container_name: auth
+    build:
+      context: ./auth
+      dockerfile: Dockerfile
+    image: auth:cors
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      #
+      - "traefik.http.routers.auth_router.rule=Host(`auth.localhost`)"
+      - "traefik.http.routers.auth_router.entrypoints=http_entrypoint"
+      #
+      # *** Definition of middleware 'authentication_middleware' that forwards all requests
+      # *** to proper API path '/authenticate' for user authentication
+      - "traefik.http.middlewares.authentication_middleware.forwardauth.address=http://auth.localhost/authenticate"
+      - "traefik.http.middlewares.authentication_middleware.forwardauth.authRequestHeaders=X-Authenticated"  # custom HTTP header
+      #
+      - "traefik.http.routers.auth_router.service=auth_service"
+      - "traefik.http.services.auth_service.loadbalancer.server.port=3000"
+
+  backend:
+    container_name: backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: backend:cors
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      #
+      # *** Definition of router 'backend_cors_router' that forwards CORS requests directly to the backend service
+      - "traefik.http.routers.backend_cors_router.rule=Host(`backend.localhost`) && Method(`OPTIONS`)"
+      - "traefik.http.routers.backend_cors_router.entrypoints=http_entrypoint"
+      #
+      # *** Definition of router 'backend_router' that first forwards non-CORS requests to the authentication service 
+      - "traefik.http.routers.backend_router.rule=Host(`backend.localhost`)"
+      - "traefik.http.routers.backend_router.entrypoints=http_entrypoint"
+      - "traefik.http.routers.backend_router.middlewares=authentication_middleware"
+      #
+      # *** Both routers 'backend_router' and 'backend_cors_router' point to the same service 'backend_service'
+      # *** that routes request to network port 3000
+      - "traefik.http.routers.backend_router.service=backend_service"
+      - "traefik.http.routers.backend_cors_router.service=backend_service"
+      - "traefik.http.services.backend_service.loadbalancer.server.port=3000"
+
+  frontend:
+    container_name: frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: frontend:cors
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      #
+      - "traefik.http.routers.frontend_router.rule=Host(`frontend.localhost`)"
+      - "traefik.http.routers.frontend_router.entrypoints=http_entrypoint"
+      - "traefik.http.routers.frontend_router.service=frontend_service"
+      - "traefik.http.services.frontend_service.loadbalancer.server.port=80"

@@ -1,0 +1,15 @@
+api:
+  dashboard: true
+  insecure: true
+
+log:
+  level: DEBUG
+
+providers:
+  docker:
+    watch: true
+    exposedByDefault: false
+
+entryPoints:
+  http_entrypoint:
+    address: ":80"

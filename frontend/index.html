@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Traefik + CORS</title>
+</head>
+<body>
+  <button onclick="makeRequest(true)">Make authenticated request</button>
+  <br>
+  <br>
+  <button onclick="makeRequest(false)">Make unauthenticated request</button>
+  <script>
+    function makeRequest(authenticated) {
+
+      console.log(`I am making an ${authenticated ? '' : 'un'}authenticated request (authenticated = ${authenticated})`);
+
+      var xhr = new XMLHttpRequest();
+      xhr.open("GET", "http://backend.localhost/", true);
+      xhr.setRequestHeader('X-Authenticated', authenticated);
+      xhr.onload = function() {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+          alert(xhr.responseText);
+        }
+      };
+      xhr.send();
+
+    }
+  </script>
+</body>
+</html>
