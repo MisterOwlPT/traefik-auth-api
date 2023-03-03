@@ -24,10 +24,10 @@ services:
       - "traefik.http.routers.auth_router.rule=Host(`auth.localhost`)"
       - "traefik.http.routers.auth_router.entrypoints=http_entrypoint"
       #
-      # *** Definition of middleware 'authentication_middleware' that forwards all requests
-      # *** to proper API path '/authenticate' for user authentication
+      # ** Definition of middleware 'authentication_middleware' that forwards all requests
+      # ** to proper API path '/authenticate' for user authentication
       - "traefik.http.middlewares.authentication_middleware.forwardauth.address=http://auth.localhost/authenticate"
-      - "traefik.http.middlewares.authentication_middleware.forwardauth.authRequestHeaders=X-Authenticated"  # custom HTTP header
+      - "traefik.http.middlewares.authentication_middleware.forwardauth.authRequestHeaders=X-Authenticated"  # allow custom HTTP header
       #
       - "traefik.http.routers.auth_router.service=auth_service"
       - "traefik.http.services.auth_service.loadbalancer.server.port=3000"
@@ -42,19 +42,19 @@ services:
     labels:
       - "traefik.enable=true"
       #
-      # *** Definition of middleware 'backend_cors_middleware' that sets required CORS-related response HTTP headers
+      # ** Definition of middleware 'backend_cors_middleware' that sets required CORS-related response HTTP headers
       - "traefik.http.middlewares.backend_cors_middleware.headers.accesscontrolalloworiginlist=http://frontend.localhost"
       - "traefik.http.middlewares.backend_cors_middleware.headers.accesscontrolallowmethods=GET,OPTIONS"
-      - "traefik.http.middlewares.backend_cors_middleware.headers.accesscontrolallowheaders=X-Authenticated"
+      - "traefik.http.middlewares.backend_cors_middleware.headers.accesscontrolallowheaders=X-Authenticated"  # allow custom HTTP header
       - "traefik.http.middlewares.backend_cors_middleware.headers.accesscontrolmaxage=100"
       - "traefik.http.middlewares.backend_cors_middleware.headers.addvaryheader=true"
       #
-      # *** Definition of router 'backend_router' that:
-      # *** replies to CORS requests using the 'backend_cors_middleware' middleware
-      # *** forwards non-CORS to the authentication service using the 'authentication_middleware' middleware
+      # ** Definition of router 'backend_router' that:
+      # ** replies to CORS requests using the 'backend_cors_middleware' middleware
+      # ** forwards non-CORS to the authentication service using the 'authentication_middleware' middleware
       - "traefik.http.routers.backend_router.rule=Host(`backend.localhost`)"
       - "traefik.http.routers.backend_router.entrypoints=http_entrypoint"
-      - "traefik.http.routers.backend_router.middlewares=backend_cors_middleware,authentication_middleware"  # order or middlewares matters
+      - "traefik.http.routers.backend_router.middlewares=backend_cors_middleware,authentication_middleware"  # order of middlewares matters!
       #
       - "traefik.http.routers.backend_router.service=backend_service"
       - "traefik.http.services.backend_service.loadbalancer.server.port=3000"
