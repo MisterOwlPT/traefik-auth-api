@@ -1,11 +1,5 @@
-const cors = require('cors');
 const express = require('express');
 const app = express();
-
-// Without CORS an error would be thrown for every invalid authentication request.
-// NOTE: using CORS here makes no difference on valid authentication requests.
-// TODO: set headers as required per use case!
-app.use(cors());
 
 app.get('/authenticate', (req, res) => {
 
