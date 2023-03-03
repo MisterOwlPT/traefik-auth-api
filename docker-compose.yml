@@ -42,19 +42,21 @@ services:
     labels:
       - "traefik.enable=true"
       #
-      # *** Definition of router 'backend_cors_router' that forwards CORS requests directly to the backend service
-      - "traefik.http.routers.backend_cors_router.rule=Host(`backend.localhost`) && Method(`OPTIONS`)"
-      - "traefik.http.routers.backend_cors_router.entrypoints=http_entrypoint"
+      # *** Definition of middleware 'backend_cors_middleware' that sets required CORS-related response HTTP headers
+      - "traefik.http.middlewares.backend_cors_middleware.headers.accesscontrolalloworiginlist=http://frontend.localhost"
+      - "traefik.http.middlewares.backend_cors_middleware.headers.accesscontrolallowmethods=GET,OPTIONS"
+      - "traefik.http.middlewares.backend_cors_middleware.headers.accesscontrolallowheaders=X-Authenticated"
+      - "traefik.http.middlewares.backend_cors_middleware.headers.accesscontrolmaxage=100"
+      - "traefik.http.middlewares.backend_cors_middleware.headers.addvaryheader=true"
       #
-      # *** Definition of router 'backend_router' that first forwards non-CORS requests to the authentication service 
+      # *** Definition of router 'backend_router' that:
+      # *** replies to CORS requests using the 'backend_cors_middleware' middleware
+      # *** forwards non-CORS to the authentication service using the 'authentication_middleware' middleware
       - "traefik.http.routers.backend_router.rule=Host(`backend.localhost`)"
       - "traefik.http.routers.backend_router.entrypoints=http_entrypoint"
-      - "traefik.http.routers.backend_router.middlewares=authentication_middleware"
+      - "traefik.http.routers.backend_router.middlewares=backend_cors_middleware,authentication_middleware"  # order or middlewares matters
       #
-      # *** Both routers 'backend_router' and 'backend_cors_router' point to the same service 'backend_service'
-      # *** that routes request to network port 3000
       - "traefik.http.routers.backend_router.service=backend_service"
-      - "traefik.http.routers.backend_cors_router.service=backend_service"
       - "traefik.http.services.backend_service.loadbalancer.server.port=3000"
 
   frontend:
